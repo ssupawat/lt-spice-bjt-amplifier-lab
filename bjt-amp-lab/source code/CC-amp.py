@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from ltspice import *
+from ltspice import Ltspice
 
 
 def main():
