@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>252330 BJT Amplifier Lab</title>
+<meta name="description" content="LTSpice + Python lab notebook: BJT characterization, CE/CC/CB amplifier stages, and coupling comparison.">
+<style>
+  :root{
+    --bg:#fbfaf7; --surface:#ffffff; --border:#e4e0d8;
+    --text:#1c1a16; --muted:#6b665c; --accent:#a2402a; --accent-soft:#f4e4de;
+    --code-bg:#f2efe8;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#15140f; --surface:#1c1b16; --border:#332f26;
+      --text:#eae6db; --muted:#a49c8c; --accent:#e08a6b; --accent-soft:#3a241d;
+      --code-bg:#211f18;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.55;
+  }
+  a{color:var(--accent)}
+  header{
+    padding:4rem 1.5rem 3rem; text-align:center;
+    border-bottom:1px solid var(--border);
+  }
+  header h1{margin:0 0 .5rem; font-size:2.1rem; letter-spacing:-.01em}
+  header p{margin:0 auto; max-width:42em; color:var(--muted); font-size:1.05rem}
+  .badges{margin-top:1.25rem; display:flex; gap:.5rem; justify-content:center; flex-wrap:wrap}
+  .badge{
+    font-size:.78rem; padding:.3em .7em; border-radius:999px;
+    background:var(--surface); border:1px solid var(--border); color:var(--muted);
+  }
+  main{max-width:920px; margin:0 auto; padding:2.5rem 1.5rem 5rem}
+  section{margin-bottom:3.5rem}
+  section > h2{
+    font-size:1.4rem; margin:0 0 .3rem; padding-bottom:.5rem;
+    border-bottom:1px solid var(--border);
+  }
+  section > .lede{color:var(--muted); margin:.4rem 0 1.5rem; max-width:65ch}
+  .result{
+    display:inline-block; margin:.25rem .5rem .25rem 0; padding:.25em .6em;
+    background:var(--accent-soft); color:var(--accent); border-radius:.4em;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.85rem;
+  }
+  .grid{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:1.25rem; margin-top:1.25rem;
+  }
+  figure{
+    margin:0; background:var(--surface); border:1px solid var(--border);
+    border-radius:.6rem; overflow:hidden;
+  }
+  figure img{display:block; width:100%; height:auto; border-bottom:1px solid var(--border)}
+  figcaption{padding:.7rem .9rem; font-size:.85rem; color:var(--muted)}
+  figcaption strong{color:var(--text); display:block; font-size:.9rem; margin-bottom:.15rem}
+  .pipeline{
+    display:flex; flex-wrap:wrap; gap:.5rem; align-items:center;
+    font-size:.9rem; color:var(--muted); margin-top:1rem;
+  }
+  .pipeline .step{
+    background:var(--code-bg); border:1px solid var(--border); border-radius:.4rem;
+    padding:.4em .7em; color:var(--text);
+  }
+  code{
+    background:var(--code-bg); padding:.15em .4em; border-radius:.3em;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.9em;
+  }
+  table{border-collapse:collapse; width:100%; margin-top:1rem; font-size:.92rem}
+  th,td{text-align:left; padding:.5em .7em; border-bottom:1px solid var(--border)}
+  th{color:var(--muted); font-weight:600}
+  footer{
+    text-align:center; padding:2.5rem 1.5rem; color:var(--muted);
+    font-size:.85rem; border-top:1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>BJT Amplifier Lab</h1>
+  <p>A LTSpice + Python lab notebook for course 252330: characterizing a bipolar junction
+     transistor, building its three classic single-stage amplifier configurations, and
+     comparing inter-stage coupling methods.</p>
+  <div class="badges">
+    <span class="badge">LTSpice</span>
+    <span class="badge">Python</span>
+    <span class="badge">NumPy / Matplotlib</span>
+    <span class="badge"><a href="https://github.com/ssupawat/252330-lab">Source on GitHub</a></span>
+  </div>
+</header>
+
+<main>
+
+  <section>
+    <h2>How it works</h2>
+    <p class="lede">Every experiment follows the same pipeline: design and simulate the
+      circuit in LTSpice, parse the raw waveform data in Python, then compute and plot
+      the results.</p>
+    <div class="pipeline">
+      <span class="step">LTSpice schematic (.asc)</span>→
+      <span class="step">simulation output (.raw)</span>→
+      <span class="step">Python (<code>ltspice</code> parser)</span>→
+      <span class="step">NumPy analysis</span>→
+      <span class="step">Matplotlib figure</span>
+    </div>
+  </section>
+
+  <section id="characterization">
+    <h2>Lab 1 &middot; BJT Characterization</h2>
+    <p class="lede">I<sub>C</sub>&ndash;V<sub>CE</sub> curves swept across several base
+      currents, used to extrapolate the transistor's Early voltage from the slope of the
+      active-region load lines.</p>
+    <span class="result">Early Voltage: &minus;98.65 V</span>
+    <div class="grid">
+      <figure>
+        <img src="assets/bjt-char-iv.png" alt="Ic vs Vce characteristic curves with Early voltage extrapolation">
+        <figcaption><strong>I<sub>C</sub>&ndash;V<sub>CE</sub> characteristics</strong>
+          Load lines for multiple I<sub>B</sub> values, extrapolated to find the Early voltage.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="amplifiers">
+    <h2>Lab 1 &middot; Single-Stage Amplifiers</h2>
+    <p class="lede">The same transistor built into the three classic single-stage
+      topologies &mdash; Common Emitter, Common Collector, and Common Base &mdash; each
+      analyzed in the time domain (V<sub>in</sub> vs V<sub>out</sub>) and frequency
+      domain (gain vs frequency, with the &minus;3 dB bandwidth marked).</p>
+    <div class="grid">
+      <figure>
+        <img src="assets/ce-vout-vin.png" alt="Common Emitter Vin-Vout waveform">
+        <figcaption><strong>Common Emitter &middot; V<sub>in</sub>&ndash;V<sub>out</sub></strong>
+          High gain, inverted output.</figcaption>
+      </figure>
+      <figure>
+        <img src="assets/ce-freq.png" alt="Common Emitter frequency response">
+        <figcaption><strong>Common Emitter &middot; Frequency response</strong>
+          Midband gain and &minus;3 dB bandwidth.</figcaption>
+      </figure>
+      <figure>
+        <img src="assets/cc-vout-vin.png" alt="Common Collector Vin-Vout waveform">
+        <figcaption><strong>Common Collector &middot; V<sub>in</sub>&ndash;V<sub>out</sub></strong>
+          Unity-gain buffer, non-inverted output.</figcaption>
+      </figure>
+      <figure>
+        <img src="assets/cc-freq.png" alt="Common Collector frequency response">
+        <figcaption><strong>Common Collector &middot; Frequency response</strong>
+          Wide bandwidth, near-unity gain.</figcaption>
+      </figure>
+      <figure>
+        <img src="assets/cb-vout-vin.png" alt="Common Base Vin-Vout waveform">
+        <figcaption><strong>Common Base &middot; V<sub>in</sub>&ndash;V<sub>out</sub></strong>
+          Non-inverted voltage gain, low input impedance.</figcaption>
+      </figure>
+      <figure>
+        <img src="assets/cb-freq.png" alt="Common Base frequency response">
+        <figcaption><strong>Common Base &middot; Frequency response</strong>
+          Highest bandwidth of the three configurations.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="coupling">
+    <h2>Lab 2 &middot; Coupling Comparison</h2>
+    <p class="lede">Two amplifier stages chained together, comparing how the choice of
+      inter-stage coupling shapes the combined frequency response.</p>
+    <table>
+      <thead><tr><th>Method</th><th>How it works</th><th>Trade-off</th></tr></thead>
+      <tbody>
+        <tr><td>Capacitor coupling</td><td>AC-couples stages through a series capacitor</td>
+            <td>Blocks DC, adds a low-frequency roll-off</td></tr>
+        <tr><td>Direct coupling</td><td>Stages wired together with no coupling element</td>
+            <td>Passes DC, but bias points interact between stages</td></tr>
+      </tbody>
+    </table>
+    <div class="grid">
+      <figure>
+        <img src="assets/capacitor-coupling-freq.png" alt="Capacitor coupling frequency response">
+        <figcaption><strong>Capacitor coupling</strong> Frequency response.</figcaption>
+      </figure>
+      <figure>
+        <img src="assets/direct-coupling-freq.png" alt="Direct coupling frequency response">
+        <figcaption><strong>Direct coupling</strong> Frequency response.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="repo">
+    <h2>Repository layout</h2>
+    <p class="lede">Each lab lives in its own folder with the same shape:</p>
+    <pre style="background:var(--code-bg); border:1px solid var(--border); border-radius:.5rem; padding:1rem; overflow-x:auto; font-size:.85rem"><code>&lt;lab&gt;/
+  ltspice/       schematics (.asc) and raw simulation output (.raw)
+  source code/   Python scripts that parse and plot the results
+  figure/        generated PNG plots</code></pre>
+    <p><a href="https://github.com/ssupawat/252330-lab">View the full source, schematics, and raw data on GitHub &rarr;</a></p>
+  </section>
+
+</main>
+
+<footer>
+  252330 BJT Amplifier Lab &middot; built with LTSpice and Python &middot;
+  <a href="https://github.com/ssupawat/252330-lab">ssupawat/252330-lab</a>
+</footer>
+
+</body>
+</html>
