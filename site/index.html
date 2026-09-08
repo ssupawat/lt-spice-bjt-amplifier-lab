@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>252330 BJT Amplifier Lab</title>
-<meta name="description" content="LTSpice + Python lab notebook: BJT characterization, CE/CC/CB amplifier stages, and coupling comparison.">
+<meta name="description" content="LTspice + Python lab notebook: BJT characterization, CE/CC/CB amplifier stages, and coupling comparison.">
 <style>
   :root{
     --bg:#fbfaf7; --surface:#ffffff; --border:#e4e0d8;
@@ -84,11 +84,11 @@
 
 <header>
   <h1>BJT Amplifier Lab</h1>
-  <p>A LTSpice + Python lab notebook for course 252330: characterizing a bipolar junction
+  <p>An LTspice + Python lab notebook for course 252330: characterizing a bipolar junction
      transistor, building its three classic single-stage amplifier configurations, and
      comparing inter-stage coupling methods.</p>
   <div class="badges">
-    <span class="badge">LTSpice</span>
+    <span class="badge">LTspice</span>
     <span class="badge">Python</span>
     <span class="badge">NumPy / Matplotlib</span>
   </div>
@@ -99,10 +99,10 @@
   <section>
     <h2>How it works</h2>
     <p class="lede">Every experiment follows the same pipeline: design and simulate the
-      circuit in LTSpice, parse the raw waveform data in Python, then compute and plot
+      circuit in LTspice, parse the raw waveform data in Python, then compute and plot
       the results.</p>
     <div class="pipeline">
-      <span class="step">LTSpice schematic (.asc)</span>→
+      <span class="step">LTspice schematic (.asc)</span>→
       <span class="step">simulation output (.raw)</span>→
       <span class="step">Python (<code>ltspice</code> parser)</span>→
       <span class="step">NumPy analysis</span>→
@@ -112,15 +112,17 @@
 
   <section id="characterization">
     <h2>Lab 1 &middot; BJT Characterization</h2>
-    <p class="lede">I<sub>C</sub>&ndash;V<sub>CE</sub> curves swept across several base
-      currents, used to extrapolate the transistor's Early voltage from the slope of the
-      active-region load lines.</p>
-    <span class="result">Early Voltage: &minus;98.65 V</span>
+    <p class="lede">A DC sweep of the transistor: V<sub>CE</sub> from 0 to 3&nbsp;V, with the base
+      current stepped from 0 to 10&nbsp;&micro;A in 2&nbsp;&micro;A steps. A second script fits the
+      active region of each curve (V<sub>CE</sub> &gt; 0.4&nbsp;V) and extends it back to the
+      V<sub>CE</sub> axis, which it crosses at &minus;98.65&nbsp;V.</p>
+    <span class="result">Early voltage: 98.65 V</span>
     <div class="grid">
       <figure>
-        <img src="assets/bjt-char-iv.png" alt="Ic vs Vce characteristic curves with Early voltage extrapolation">
+        <img src="assets/bjt-char-iv.png" alt="Ic vs Vce characteristic curves for six base currents">
         <figcaption><strong>I<sub>C</sub>&ndash;V<sub>CE</sub> characteristics</strong>
-          Load lines for multiple I<sub>B</sub> values, extrapolated to find the Early voltage.</figcaption>
+          Six curves, I<sub>B</sub> = 0 to 10&nbsp;&micro;A. The dashed line marks
+          V<sub>CE</sub> = 0.3&nbsp;V.</figcaption>
       </figure>
     </div>
   </section>
@@ -128,64 +130,82 @@
   <section id="amplifiers">
     <h2>Lab 1 &middot; Single-Stage Amplifiers</h2>
     <p class="lede">The same transistor built into the three classic single-stage
-      topologies &mdash; Common Emitter, Common Collector, and Common Base &mdash; each
-      analyzed in the time domain (V<sub>in</sub> vs V<sub>out</sub>) and frequency
-      domain (gain vs frequency, with the &minus;3 dB bandwidth marked).</p>
+      topologies &mdash; Common Emitter, Common Collector, and Common Base. Each one is run
+      twice: a transient sweep driven by a 10&nbsp;mV, 1&nbsp;kHz sine
+      (V<sub>in</sub> vs V<sub>out</sub>), and an AC sweep plotted as output magnitude in dB
+      for a 1&nbsp;V AC source, with the &minus;3 dB cursors drawn on the plot.</p>
+    <table>
+      <thead><tr><th>Configuration</th><th>Midband</th><th>Lower &minus;3 dB</th><th>Upper &minus;3 dB</th><th>Output phase</th></tr></thead>
+      <tbody>
+        <tr><td>Common Emitter</td><td>&asymp;41 dB</td><td>&asymp;60 Hz</td><td>&asymp;20 MHz</td><td>inverted</td></tr>
+        <tr><td>Common Collector</td><td>&asymp;0 dB (0.97 V/V)</td><td>1.8 Hz</td><td>21 GHz</td><td>in phase</td></tr>
+        <tr><td>Common Base</td><td>41.4 dB</td><td>500 Hz</td><td>18.8 MHz</td><td>in phase</td></tr>
+      </tbody>
+    </table>
+    <p class="lede">The AC sweeps do not all cover the same span: CE and CB run 10&nbsp;Hz&ndash;100&nbsp;MHz,
+      CC runs 1&nbsp;mHz&ndash;100&nbsp;GHz. All three drive R<sub>L</sub> = 100&nbsp;M&#8486; from a
+      source with no series resistance.</p>
     <div class="grid">
       <figure>
         <img src="assets/ce-vout-vin.png" alt="Common Emitter Vin-Vout waveform">
         <figcaption><strong>Common Emitter &middot; V<sub>in</sub>&ndash;V<sub>out</sub></strong>
-          High gain, inverted output.</figcaption>
+          10&nbsp;mV in; the output swings about +1.0&nbsp;V / &minus;1.3&nbsp;V, inverted.</figcaption>
       </figure>
       <figure>
         <img src="assets/ce-freq.png" alt="Common Emitter frequency response">
         <figcaption><strong>Common Emitter &middot; Frequency response</strong>
-          Midband gain and &minus;3 dB bandwidth.</figcaption>
+          Flat at roughly 41&nbsp;dB, with the &minus;3 dB cursors near 60&nbsp;Hz and 20&nbsp;MHz.</figcaption>
       </figure>
       <figure>
         <img src="assets/cc-vout-vin.png" alt="Common Collector Vin-Vout waveform">
         <figcaption><strong>Common Collector &middot; V<sub>in</sub>&ndash;V<sub>out</sub></strong>
-          Unity-gain buffer, non-inverted output.</figcaption>
+          The output tracks the 10&nbsp;mV input at almost the same amplitude and in phase.</figcaption>
       </figure>
       <figure>
         <img src="assets/cc-freq.png" alt="Common Collector frequency response">
         <figcaption><strong>Common Collector &middot; Frequency response</strong>
-          Wide bandwidth, near-unity gain.</figcaption>
+          Flat just under 0&nbsp;dB (0.97 V/V at 1&nbsp;kHz) between 1.8&nbsp;Hz and 21&nbsp;GHz.</figcaption>
       </figure>
       <figure>
         <img src="assets/cb-vout-vin.png" alt="Common Base Vin-Vout waveform">
         <figcaption><strong>Common Base &middot; V<sub>in</sub>&ndash;V<sub>out</sub></strong>
-          Non-inverted voltage gain, low input impedance.</figcaption>
+          10&nbsp;mV in; the output swings about +0.95&nbsp;V / &minus;1.2&nbsp;V, in phase.</figcaption>
       </figure>
       <figure>
         <img src="assets/cb-freq.png" alt="Common Base frequency response">
         <figcaption><strong>Common Base &middot; Frequency response</strong>
-          Highest bandwidth of the three configurations.</figcaption>
+          41.4&nbsp;dB midband, with &minus;3 dB points at 500&nbsp;Hz and 18.8&nbsp;MHz.</figcaption>
       </figure>
     </div>
   </section>
 
   <section id="coupling">
     <h2>Lab 2 &middot; Coupling Comparison</h2>
-    <p class="lede">Two amplifier stages chained together, comparing how the choice of
-      inter-stage coupling shapes the combined frequency response.</p>
+    <p class="lede">Two two-stage amplifiers, built with different inter-stage connections and
+      swept with <code>.ac</code> over 10&nbsp;Hz&ndash;100&nbsp;MHz (capacitor) and
+      10&nbsp;mHz&ndash;100&nbsp;MHz (direct). Both keep 10&nbsp;&micro;F input and output coupling
+      capacitors and an emitter bypass capacitor, so both roll off at the low end.</p>
     <table>
-      <thead><tr><th>Method</th><th>How it works</th><th>Trade-off</th></tr></thead>
+      <thead><tr><th>Build</th><th>Stages</th><th>Inter-stage link</th><th>Measured</th></tr></thead>
       <tbody>
-        <tr><td>Capacitor coupling</td><td>AC-couples stages through a series capacitor</td>
-            <td>Blocks DC, adds a low-frequency roll-off</td></tr>
-        <tr><td>Direct coupling</td><td>Stages wired together with no coupling element</td>
-            <td>Passes DC, but bias points interact between stages</td></tr>
+        <tr><td>Capacitor coupling</td><td>2SC458 &rarr; 2SC458, both common emitter</td>
+            <td>0.1&nbsp;&micro;F series capacitor</td>
+            <td>41.0 dB midband; &minus;3 dB at 416 Hz and 599 kHz</td></tr>
+        <tr><td>Direct coupling</td><td>2SC458 (NPN) &rarr; 2SA1015 (PNP)</td>
+            <td>collector wired straight to the next base</td>
+            <td>37.7 dB midband; &minus;3 dB at 10.5 Hz and 438 kHz</td></tr>
       </tbody>
     </table>
     <div class="grid">
       <figure>
         <img src="assets/capacitor-coupling-freq.png" alt="Capacitor coupling frequency response">
-        <figcaption><strong>Capacitor coupling</strong> Frequency response.</figcaption>
+        <figcaption><strong>Capacitor coupling</strong> 41.0&nbsp;dB midband, 416&nbsp;Hz to
+          599&nbsp;kHz between the &minus;3 dB cursors.</figcaption>
       </figure>
       <figure>
         <img src="assets/direct-coupling-freq.png" alt="Direct coupling frequency response">
-        <figcaption><strong>Direct coupling</strong> Frequency response.</figcaption>
+        <figcaption><strong>Direct coupling</strong> 37.7&nbsp;dB midband, 10.5&nbsp;Hz to
+          438&nbsp;kHz between the &minus;3 dB cursors.</figcaption>
       </figure>
     </div>
   </section>
@@ -193,7 +213,7 @@
 </main>
 
 <footer>
-  252330 BJT Amplifier Lab &middot; built with LTSpice and Python
+  252330 BJT Amplifier Lab &middot; built with LTspice and Python
 </footer>
 
 </body>
