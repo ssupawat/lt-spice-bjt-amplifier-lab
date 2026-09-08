@@ -1,5 +1,6 @@
+import numpy as np
 import matplotlib.pyplot as plt
-from ltspice import *
+from ltspice import Ltspice
 from matplotlib.ticker import EngFormatter
 
 
@@ -11,7 +12,6 @@ def main():
 
     # prepare data
     raw_vout = np.absolute(rawdata.get_data('V(vout)'))
-    print(raw_vout)
     vout = []
     for data in raw_vout:
         vout.append(20 * np.log10(data))
@@ -22,7 +22,6 @@ def main():
     vout_3dB = np.max(vout) - 3
     freq_cutoff_index = np.where(np.around(vout_3dB, decimals=0)
                                  == np.around(vout, decimals=0))
-    print(freq_cutoff_index)
     low_cutoff_freq = freq[freq_cutoff_index[0][0]]
     high_cutoff_freq = freq[freq_cutoff_index[0][1]]
     print(
